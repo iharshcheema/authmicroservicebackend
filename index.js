@@ -1,16 +1,18 @@
+const env = require('dotenv');
+env.config({ path: './config.env' });
+
 const express = require('express');
-const serverless = require('serverless-http');
+const app = express();
+const port = process.env.PORT;
 const cors = require('cors');
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
+
 const cookieParser = require('cookie-parser');
 
-// Load environment variables
-dotenv.config({ path: './config.env' });
+const uri = process.env.URI;
 
-const app = express();
+const authRoutes = require('./routes/authRoutes');
 
-// Middleware setup
 const allowedOrigins = [
   'https://mern-auth-react.vercel.app',
   'http://localhost:5173',
@@ -18,23 +20,21 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: allowedOrigins,
     credentials: true,
+    origin: allowedOrigins,
   })
 );
 
 app.use(express.json());
 app.use(cookieParser());
 
-// Connect to MongoDB
 mongoose
-  .connect(process.env.URI)
+  .connect(uri)
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
-// Routes
-const authRoutes = require('../routes/authRoutes');
-app.use('/api', authRoutes);
+app.use(authRoutes);
 
-// Export as serverless function
-module.exports = { handler: serverless(app) };
+app.listen(port, () => {
+  console.log(`app is listening on port ${port}`);
+});
